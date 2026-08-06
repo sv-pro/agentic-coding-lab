@@ -67,8 +67,17 @@ analysis around tool-name granularity, or log redacted arguments upstream first.
 
 Worth knowing before you draw conclusions from the distribution:
 
-- **Remote (SSE/HTTP) servers.** The gateway fronts a spawned process; a server reached
-  over a URL has no command to wrap. Reported as `unobserved:`, never silently dropped.
+- **Servers your client connects to directly**, with no local process in the path. The
+  gateway interposes by *being* the process the client spawns, so with nothing to
+  substitute it has nowhere to stand. Reported as `unobserved:`, never silently dropped.
+
+  This is a limit of the gateway build, not of the approach. Transport is an adapter
+  concern — a process can be exposed over HTTP and a URL can be pumped over stdio, and
+  bridges like `mcp-remote` do the second routinely. What interposition actually requires
+  is that **the client's endpoint be redirectable**: a command you can substitute, or a
+  URL you can repoint. Route a remote server through a stdio bridge and it is in scope
+  today. Only an endpoint you cannot change is genuinely closed to this, and that is a
+  configuration-control property rather than a transport one.
 - **The client's built-in tools.** Web search, the analysis tool, file attachments — none
   of them travel over MCP, so none of them appear. On Claude Desktop the census is an
   *MCP-seam* census, and calling it a complete picture of what the agent did would be

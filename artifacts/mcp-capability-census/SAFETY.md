@@ -67,10 +67,12 @@ foot-guns:
 - It **never overwrites your live config.** `--emit-config` writes to a separate path and
   exits with an error if that path resolves to the original. You copy it over yourself.
 - It **spawns nothing under `--dry-run`**, so the config can be audited before it runs.
-- It **names what it skipped.** Remote (SSE/HTTP) servers have no `command`, so the
-  gateway cannot wrap them and they stay unobserved. Disabled entries are skipped. Both
-  are printed as `unobserved:` lines, because a capability distribution with silent gaps
-  is worse than one with stated gaps.
+- It **names what it skipped.** Entries with no `command` are out of scope for this
+  gateway build, which wraps stdio only — not because the transport is unreachable, but
+  because interposing needs a process to substitute and there isn't one. Route such a
+  server through a stdio bridge and it comes back into scope. Disabled entries are
+  skipped too. Both are printed as `unobserved:` lines, because a capability distribution
+  with silent gaps is worse than one with stated gaps.
 - It **terminates each server** after `tools/list`, with a kill after a 5s grace period.
 
 ## What is NOT bounded

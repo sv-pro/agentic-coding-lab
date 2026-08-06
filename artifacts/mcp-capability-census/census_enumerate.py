@@ -266,10 +266,13 @@ def main() -> int:
             skipped.append((name, "disabled in the config"))
             continue
         if not entry.get("command"):
-            # Remote (SSE/HTTP) servers have a url, not a command. The gateway fronts a
-            # spawned process, so it cannot wrap these — they stay unobserved, and that
-            # belongs in the write-up rather than in a silent skip.
-            skipped.append((name, "not a stdio server (no command) — the gateway cannot wrap it"))
+            # No command means there is no process to substitute. That is a limit of this
+            # gateway build, not of the approach: transport is an adapter concern, and
+            # interposition needs only that the client's endpoint be redirectable. Routing
+            # such a server through a stdio bridge puts it back in scope today, and an
+            # HTTP-side adapter on the gateway would too.
+            skipped.append((name, "no command — this gateway build wraps stdio only; route it "
+                                  "through a stdio bridge to bring it into scope"))
             continue
 
         command = [entry["command"], *entry.get("args", [])]
