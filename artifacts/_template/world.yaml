@@ -1,0 +1,82 @@
+# Example enforcement file for a tier-1 artifact.
+#
+# This is a real WorldManifest — the same schema the ai2rules compiler consumes —
+# trimmed to the smallest thing that demonstrates the three verdicts an artifact
+# author cares about. Copy it, then widen or narrow it for your artifact.
+#
+# The interesting line in this file is the one that ISN'T here: there is no
+# `WebFetch` action. A tool the manifest never declares is ABSENT — not denied,
+# not prompted, just not part of the world the agent can represent. That is the
+# difference between tier 1 and tier 2 in one manifest.
+#
+# Verify before you trust it:
+#   harness gate --world artifacts/_template/world.yaml   # GateRequest on stdin
+world_id: artifact-template
+
+actors:
+  - { name: developer, kind: User }
+  - { name: claude, kind: Model }
+  - { name: subagent, kind: Subagent }
+  - { name: shell, kind: ShellWorker }
+
+data_classes: [Public, Workspace, Secret, Credential, Generated, External]
+
+# Where input came from, and how much that source is trusted. These rows are
+# policy, not documentation — the compiled world enforces them. Declare them
+# explicitly: an undeclared channel is treated as untrusted, which is safe but
+# produces verdicts that surprise you ("why is this ABSENT rather than denied?").
+channels:
+  - { name: user_prompt, trust: Trusted, taint: false }
+  - { name: workspace_files, trust: SemiTrusted, taint: true }
+  - { name: shell_output, trust: SemiTrusted, taint: true }
+  - { name: web_fetch, trust: Untrusted, taint: true }
+
+capabilities:
+  - { trust: Trusted, actions: [Read, Write, Patch, Command] }
+  - { trust: SemiTrusted, actions: [Read, Write, Patch, Command] }
+  - { trust: Untrusted, actions: [Read] }
+  - { trust: Derived, actions: [Read] }
+
+base_actions:
+  - { name: Read, action_type: Read, side_effect: Read }
+  - { name: Glob, action_type: Read, side_effect: Read }
+  - { name: Grep, action_type: Read, side_effect: Read }
+  - { name: Edit, action_type: Patch, side_effect: FilesystemWrite }
+  - { name: Write, action_type: Write, side_effect: FilesystemWrite }
+  # Shell, split by the kernel's own classifier so that "destructive" is a
+  # different action from "ordinary", not a different opinion about one action.
+  - { name: Bash, action_type: Command, side_effect: Process }
+  - { name: Bash_network, action_type: Command, side_effect: Network }
+  - { name: Bash_destructive, action_type: Command, side_effect: Process, approval_required: true }
+  - { name: Bash_unclassified, action_type: Command, side_effect: Network, approval_required: true }
+
+command_classes:
+  - action: Bash
+    arg: command
+    default_to: Bash_unclassified
+    classes:
+      - to: Bash_network
+        patterns: ["curl ", "wget ", "nc ", "ncat ", "telnet ", "ssh ", "scp ", "sftp "]
+      - to: Bash_destructive
+        patterns: ["rm -rf", "rm -fr", "sudo ", "mkfs", "dd if=", ":(){"]
+
+# Tainted context cannot reach anything that leaves the machine. Taint only
+# spreads; it never washes out. This is the block that matters for any artifact
+# that reads an issue tracker, a web page, or somebody else's PR description.
+transition_policies:
+  - { from_taint: Tainted, side_effect: Network, decision: Deny, rule: no_tainted_network }
+  - { from_taint: Tainted, side_effect: External, decision: Deny, rule: no_tainted_external }
+  - { from_taint: Tainted, side_effect: Credential, decision: Deny, rule: no_tainted_credential }
+  - { from_taint: Tainted, side_effect: Memory, decision: Deny, rule: no_tainted_memory_write }
+  - { from_taint: Tainted, side_effect: PersistentWrite, decision: Deny, rule: no_tainted_persistent_write }
+
+budget:
+  max_tokens_per_session: 1000000
+  max_commands_per_task: 200
+  command_timeout_ms: 120000
+
+observability:
+  redact:
+    - "env.*_TOKEN"
+    - "env.*_KEY"
+    - "**/.env"

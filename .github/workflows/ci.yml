@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # Enforces the one rule this repo lives by: an artifact may not describe itself as
+  # safer than it is. The self-test runs alongside the check because a linter that has
+  # never rejected anything is indistinguishable from one that accepts everything.
+  artifact-contract:
+    name: artifact contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: The linter rejects what it claims to reject
+        run: ./scripts/check-artifacts.py --self-test
+
+      - name: Every artifact satisfies the contract
+        run: ./scripts/check-artifacts.py
+
+      - name: The lint stays dependency-free
+        run: |
+          # It ships as a content-repo lint. Anyone should be able to run it with a
+          # bare python3, so a stray third-party import is a regression, not a detail.
+          python3 - <<'PY'
+          import ast, pathlib, sys
+          stdlib = set(sys.stdlib_module_names)
+          src = pathlib.Path("scripts/check-artifacts.py")
+          tree = ast.parse(src.read_text())
+          mods = set()
+          for node in ast.walk(tree):
+              if isinstance(node, ast.Import):
+                  mods |= {a.name.split(".")[0] for a in node.names}
+              elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                  mods.add(node.module.split(".")[0])
+          extra = sorted(mods - stdlib)
+          assert not extra, f"{src} imports non-stdlib modules: {extra}"
+          print("stdlib only:", sorted(mods))
+          PY
+
+  # Manifests are verified on an author's machine, not here — this repo does not build
+  # Rust. What CI *can* check is that a tier claim ships the file it names, which the
+  # artifact-contract job above does. This job keeps the docs' links honest instead.
+  links:
+    name: internal links resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: No markdown link points at a file that isn't here
+        run: |
+          python3 - <<'PY'
+          import pathlib, re, sys
+          root = pathlib.Path(".")
+          pattern = re.compile(r"\[[^\]]*\]\(([^)#\s]+)(?:#[^)]*)?\)")
+          broken = []
+          for md in root.rglob("*.md"):
+              if ".git" in md.parts:
+                  continue
+              for target in pattern.findall(md.read_text(encoding="utf-8")):
+                  if target.startswith(("http://", "https://", "mailto:")):
+                      continue
+                  if not (md.parent / target).exists():
+                      broken.append(f"{md}: {target}")
+          if broken:
+              print("\n".join(broken))
+              sys.exit(1)
+          print("all internal links resolve")
+          PY

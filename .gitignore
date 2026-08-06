@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+.DS_Store
+
+# Local agent state — settings.local.json, worktrees, caches. The artifacts this repo
+# publishes live under artifacts/, never in a live .claude/ directory.
+.claude/settings.local.json
+.claude/worktrees/
+
+# Experiment runs can be large; commit the ones a result depends on, deliberately.
+experiments/**/runs/*.raw
