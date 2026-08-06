@@ -3,9 +3,11 @@
 Things you can copy into a project: skills, plugins, subagents, hooks, slash commands,
 MCP server configs, prompt scaffolds.
 
-**Nothing here yet.** `_template/` is the skeleton, not an artifact — see the note in
-the root [README](../README.md#current-state--read-this-before-judging-the-repo) about
-why this directory starts empty rather than full of placeholders.
+| Artifact | Kind | Tier | Verified |
+|---|---|---|---|
+| [`mcp-capability-census`](mcp-capability-census/) | command | 0 — unenforced | 2026-08-06 |
+
+`_template/` is the skeleton, not an artifact.
 
 ## Adding one
 

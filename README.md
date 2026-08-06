@@ -60,15 +60,20 @@ fails the build if it doesn't. An artifact nobody has actually run has to say so
 its own front page. See [`docs/SAFETY-BASELINE.md`](docs/SAFETY-BASELINE.md) for the
 full definition and the commands behind each tier.
 
-## Current state — read this before judging the repo
+## Current state
 
-**Nothing ships yet.** This is the scaffolding commit: the charter, the safety
-baseline, the artifact contract, the template, and the CI lint that enforces it.
-`artifacts/` contains a template and no artifacts.
+**One artifact, verified.**
+[`mcp-capability-census`](artifacts/mcp-capability-census/) enumerates every tool your
+MCP servers expose and writes a manifest declaring all of it — the step that has to come
+before you can *record* a week of real usage without changing what the agent can do.
 
-That is deliberate. The contract above forbids shipping an artifact that hasn't been
-run, and none have been run *here* yet. The first real artifacts get added as they are
-built and verified, not as placeholders.
+It is **tier 0**, and that is the honest label: it ships no enforcement of its own. Its
+output is what makes tier 2 reachable, but that's a fact about the manifest it writes,
+not about the script. Calling it tier 1 because it's governance-adjacent would be the
+inflation the contract exists to stop.
+
+No experiments or articles published yet. The census experiment they'll come from is
+described in [`experiments/`](experiments/).
 
 ## Open calls before this goes public
 
