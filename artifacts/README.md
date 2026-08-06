@@ -5,6 +5,7 @@ MCP server configs, prompt scaffolds.
 
 | Artifact | Kind | Tier | Verified |
 |---|---|---|---|
+| [`claude-code-tool-log`](claude-code-tool-log/) | hook | 0 — unenforced | 2026-08-06 |
 | [`mcp-capability-census`](mcp-capability-census/) | command | 0 — unenforced | 2026-08-06 |
 
 `_template/` is the skeleton, not an artifact.

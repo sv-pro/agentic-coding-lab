@@ -62,15 +62,18 @@ full definition and the commands behind each tier.
 
 ## Current state
 
-**One artifact, verified.**
-[`mcp-capability-census`](artifacts/mcp-capability-census/) enumerates every tool your
-MCP servers expose and writes a manifest declaring all of it — the step that has to come
-before you can *record* a week of real usage without changing what the agent can do.
+**Two artifacts, both verified.**
+[`claude-code-tool-log`](artifacts/claude-code-tool-log/) is a `PreToolUse` hook that
+logs every tool call Claude Code makes — native and MCP, with arguments, at a redaction
+level you choose. If you use Claude Code and want a capability census, start there.
+[`mcp-capability-census`](artifacts/mcp-capability-census/) covers the other seam: it
+enumerates every tool your MCP servers expose and writes a manifest declaring all of it,
+which is what any client without a hook needs.
 
-It is **tier 0**, and that is the honest label: it ships no enforcement of its own. Its
-output is what makes tier 2 reachable, but that's a fact about the manifest it writes,
-not about the script. Calling it tier 1 because it's governance-adjacent would be the
-inflation the contract exists to stop.
+Both are **tier 0**, and that is the honest label: neither enforces anything on itself.
+One is a logger, the other writes a manifest that makes tier 2 reachable — but that's a
+fact about the manifest, not about the script. Calling either tier 1 because it is
+governance-adjacent would be the inflation the contract exists to stop.
 
 No experiments or articles published yet. The census experiment they'll come from is
 described in [`experiments/`](experiments/).
@@ -80,7 +83,8 @@ described in [`experiments/`](experiments/).
 - **No LICENSE yet.** A repo whose point is that people copy things out of it needs
   one. Sibling repos in this cluster don't carry a license either, so this is a
   cluster-wide call rather than a local oversight.
-- **No published artifact yet**, per the section above.
+- **No experiment published yet.** The artifacts are the instruments; the result they
+  exist to produce hasn't been run.
 
 ## Relationship to the rest of the cluster
 

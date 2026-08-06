@@ -313,9 +313,18 @@ def main() -> int:
 
     for name, why in skipped:
         print(f"unobserved: {name} — {why}")
-    if skipped:
-        print("\nServers listed above are NOT in the census. Say so in the write-up:")
-        print("a capability distribution with silent gaps is worse than one with stated gaps.")
+
+    # Printed unconditionally, because the things it names are exactly the ones this
+    # script cannot detect. A skip it can report is a stated gap; a surface that never
+    # appears in the config is a silent one, and silent gaps are what the census exists
+    # to avoid. The tool can't see them. The operator can.
+    print("\nCheck these by hand — this script cannot see them:")
+    print("  · Connectors added through the client's settings UI. They are not in this")
+    print("    config file, so nothing above can list them, including as skipped.")
+    print("  · The client's own built-in tools (web search, code execution, file")
+    print("    uploads). They never travel over MCP, so no gateway will ever see them.")
+    print("Write down whatever you find. A distribution with silent gaps is worse than")
+    print("one with stated gaps.")
     return 0
 
 
