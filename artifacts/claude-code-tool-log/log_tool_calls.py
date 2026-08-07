@@ -32,6 +32,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -41,6 +42,70 @@ from pathlib import Path
 # not listed here stay out of the log.
 PATH_FIELDS = ("file_path", "notebook_path", "path", "pattern")
 URL_FIELDS = ("url",)
+
+# --- shell command extraction ------------------------------------------------------
+# First-token parsing does not survive real input: a live session produced `if` and
+# `BEFORE=$(wc` for roughly a fifth of its shell calls, because control flow and variable
+# assignment both occupy position zero without being commands. So instead of reading one
+# token, walk the string and collect what sits in *command position* — the start, or just
+# after a separator or a control keyword.
+
+_ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*\+?=")
+
+# Reset to a command position; these are structure, not programs.
+_SEPARATORS = {";", ";;", "&&", "||", "|", "|&", "&", "(", ")", "{", "}", "\n"}
+
+# Keywords followed by a command: step over them and keep looking (`if grep …`).
+_KEYWORDS_TRANSPARENT = {"if", "then", "elif", "else", "fi", "while", "until", "do",
+                         "done", "esac", "function", "time", "!", "coproc"}
+
+# Keywords followed by *words*, not commands (`for i in a b`). Their operands must not be
+# mistaken for programs, so these consume the command position instead of passing it on.
+_KEYWORDS_BINDING = {"for", "case", "select", "in"}
+
+# Real commands that reach nothing worth counting in a capability census.
+_TRIVIAL = {"[", "[[", "]", "]]", "test", ":", "true", "false"}
+
+
+def _tokens(command: str) -> list[str]:
+    """Split on whitespace after padding shell operators so they become their own tokens.
+
+    Not a shell parser — deliberately. `$(` degrades to `$` + `(`, which is exactly what
+    we want: the `$` is ignored and the `(` opens a command position, so the contents of a
+    substitution get scanned like anything else.
+    """
+    text = command
+    for op in ("&&", "||", ";;", "|&"):
+        text = text.replace(op, f" {op} ")
+    for ch in (";", "|", "&", "(", ")", "{", "}", "\n"):
+        text = text.replace(ch, f" {ch} ")
+    return text.split()
+
+
+def shell_commands(command: str) -> list[str]:
+    """Every program invoked in `command`, in order, deduplicated.
+
+    Assignments and keywords are skipped rather than reported, and a leading path is
+    reduced to its basename so `/usr/bin/git` and `git` aggregate together.
+    """
+    found: list[str] = []
+    at_command = True
+    for tok in _tokens(command):
+        if tok in _SEPARATORS:
+            at_command = True
+            continue
+        if not at_command:
+            continue
+        if _ASSIGNMENT.match(tok) or tok in _KEYWORDS_TRANSPARENT:
+            continue  # still looking for the command this belongs to
+        if tok in _KEYWORDS_BINDING or tok in _TRIVIAL:
+            at_command = False
+            continue
+        name = tok.rsplit("/", 1)[-1][:64]
+        if name and name not in found:
+            found.append(name)
+        at_command = False
+    return found
 
 
 def summarize(tool_input: dict, level: str) -> dict:
@@ -64,14 +129,49 @@ def summarize(tool_input: dict, level: str) -> dict:
             out[field] = rest.split("/", 1)[0]
     command = tool_input.get("command")
     if isinstance(command, str):
-        # argv0 is enough to classify (git / curl / rm / npm) without recording what was
-        # actually run. `--level full` is there for anyone who needs the rest.
-        out["argv0"] = command.strip().split(" ", 1)[0][:64]
+        # Which programs this call reaches, without recording what it asked them to do.
+        # `commands` is the field to count; `argv0` is kept as its first element for
+        # continuity with logs written before this was fixed.
+        cmds = shell_commands(command)
+        out["commands"] = cmds
+        out["argv0"] = cmds[0] if cmds else None
         out["command_bytes"] = len(command)
     return out
 
 
+# Cases 1-3 are verbatim from the live session that showed first-token parsing failing.
+SELF_TEST = [
+    ("BEFORE=$(wc -l < ~/log || echo 0)", ["wc", "echo"]),
+    ("if [ -f ~/log ]; then echo yes; else echo no; fi", ["echo"]),
+    ("cd /repo && ./scripts/check.sh", ["cd", "check.sh"]),
+    ("git status --short", ["git"]),
+    ('curl -H "Auth: Bearer sk-X" https://api.example.com | jq .', ["curl", "jq"]),
+    ("sudo rm -rf /tmp/x", ["sudo"]),
+    ("FOO=1 BAR=2 python3 run.py", ["python3"]),
+    ("/usr/bin/git push", ["git"]),
+    ("for i in 1 2 3; do echo $i; done", ["echo"]),
+    ("python3 - <<'PY'", ["python3"]),
+    ("", []),
+    ("   ", []),
+]
+
+
+def self_test() -> int:
+    failures = 0
+    for command, expected in SELF_TEST:
+        got = shell_commands(command)
+        if got == expected:
+            print(f"  ok    {command[:44]!r:48} -> {got}")
+        else:
+            failures += 1
+            print(f"  FAIL  {command[:44]!r:48} -> {got}, want {expected}")
+    print(f"\nself-test: {failures} failure(s)")
+    return 1 if failures else 0
+
+
 def main() -> int:
+    if "--self-test" in sys.argv[1:]:
+        return self_test()
     ap = argparse.ArgumentParser()
     ap.add_argument("--log", default="~/claude-tool-log.jsonl")
     ap.add_argument("--level", choices=("keys", "paths", "full"), default="keys",

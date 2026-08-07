@@ -31,7 +31,9 @@ Then in `~/.claude/settings.json` (user-wide) or `<project>/.claude/settings.jso
 }
 ```
 
-Start a new session — hooks are read at session start. Then work normally.
+Then work normally. No restart needed — user-level hook config is read live; a hook
+added mid-session fires on the very next tool call (measured 2026-08-06, and removal
+takes effect the same way).
 
 [`log-sample.jsonl`](log-sample.jsonl) is a real one — 16 calls from ~100 minutes of
 actual work at `--level paths`, not a fixture:
@@ -60,22 +62,45 @@ What 16 real calls look like in aggregate:
 | Write | 4 |
 | Read · Edit | 1 each |
 
-### What the real sample caught that fixtures didn't
+### What the real sample caught, and the fix it forced
 
-`argv0` is meant to classify a shell call — `git`, `curl`, `rm` — without recording the
-command. Across the 10 real `Bash` calls it produced: `git`×2, `echo`×2, `cd`×2, `grep`,
-`python3` … and **`if`** and **`BEFORE=$(wc`**.
+The sample was recorded when shell classification was "take the first token". Across 10
+real `Bash` calls that produced `git`×2, `echo`×2, `cd`×2, `grep`, `python3` … and
+**`if`** and **`BEFORE=$(wc`**.
 
-Shell control flow and variable assignment defeat "first token" entirely. Every synthetic
-event I tested with began with a clean command name, so the heuristic looked perfect until
-it met real input. **Roughly 20% of real shell calls classify to nothing useful** — plan
-your analysis accordingly, and treat `argv0` as a hint rather than a category.
+Control flow and variable assignment both occupy position zero without being commands.
+Every synthetic event used in development began with a clean command name, so the
+heuristic looked perfect until it met a live session — about a fifth of real calls
+classified to nothing.
+
+**Now fixed.** The logger walks the string and collects what sits in *command position* —
+the start, or just after a separator or a control keyword — skipping assignments and
+keywords, unwrapping `$(…)`, and reducing `/usr/bin/git` to `git`:
+
+| Command | `commands` |
+|---|---|
+| `BEFORE=$(wc -l < ~/log \|\| echo 0)` | `["wc", "echo"]` |
+| `if [ -f x ]; then echo yes; fi` | `["echo"]` |
+| `curl … \| jq .` | `["curl", "jq"]` |
+| `for i in 1 2 3; do echo $i; done` | `["echo"]` |
+| `cd /repo && ./scripts/check.sh` | `["cd", "check.sh"]` |
+
+`commands` is the field to count — a call that runs `cd /repo && git push` reaches `git`,
+and first-token parsing would have told you it reached `cd`. `argv0` is kept as its first
+element so older logs stay comparable.
+
+```bash
+./log_tool_calls.py --self-test   # 12 cases, three lifted from the failing session
+```
+
+**[`log-sample.jsonl`](log-sample.jsonl) predates the fix** and is kept that way on
+purpose: it is the evidence that produced it, and `if` / `BEFORE=$(wc` are visible in it.
 
 ## How much to record
 
 ```bash
 --level keys    # default: which tools, when, argument NAMES only. No values.
---level paths   # + file paths, URL host, and the command's first word
+--level paths   # + file paths, URL host, and which programs each shell call runs
 --level full    # the entire tool_input, secrets included
 ```
 
@@ -111,10 +136,10 @@ is every host except Claude Code today.
 - **How long anything took**, or what it returned.
 - **Anything about a different host.** Claude Desktop has no hooks. Codex and Copilot
   have their own shapes.
-- **Reliable command classification.** `argv0` is the first token, and real shell input
-  is full of `if`, `for`, and `VAR=$(…)`. About a fifth of the calls in the real sample
-  classify to nothing. Use `--level full` if you need this to be exact — and read
-  [`SAFETY.md`](SAFETY.md) before you do.
+- **Perfect command classification.** `commands` handles assignments, keywords, pipes and
+  substitutions, but it is a scanner and not a shell parser: `eval`, `xargs`, `bash -c`
+  and aliases all hide the program that actually runs. Use `--level full` when you need
+  this exact — and read [`SAFETY.md`](SAFETY.md) before you do.
 
 ## Rotate it
 

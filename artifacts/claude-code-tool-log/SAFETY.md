@@ -44,7 +44,7 @@ events containing a bearer token, an API query-string token, and a hardcoded pas
 | `--level` | Records | Secrets in a `curl -H "Authorization: Bearer …"` |
 |---|---|---|
 | `keys` *(default)* | tool, timestamp, session, cwd, argument **key names**, byte size | none — verified 0 matches |
-| `paths` | + `file_path` / `notebook_path` / `pattern`, URL **host only**, and `argv0` | none — verified 0 matches |
+| `paths` | + `file_path` / `notebook_path` / `pattern`, URL **host only**, and `commands` | none — verified 0 matches |
 | `full` | the entire `tool_input` | **all of them, verbatim** |
 
 `--level full` is the only setting that supports exact offline replay against a candidate
@@ -52,12 +52,17 @@ manifest, and it is the only one that writes your secrets to a file. That trade 
 whole reason the levels exist; pick deliberately, and don't leave `full` on after the
 run you needed it for.
 
-**A limit found by running it for real, not by testing it.** At `paths`, `argv0` is the
-command's first token — which is `if`, `for` or `VAR=$(…)` often enough that about a fifth
-of real shell calls classify to nothing. Every synthetic event used during development
-started with a clean command name, so the heuristic looked sound until it met a live
-session. It is a hint, not a category, and [`log-sample.jsonl`](log-sample.jsonl) shows
-exactly where it fails.
+**A limit found by running it for real, not by testing it — since fixed.** At `paths`,
+shell classification was originally the command's first token, which is `if`, `for` or
+`VAR=$(…)` often enough that about a fifth of real calls classified to nothing. Every
+synthetic event used during development started with a clean command name, so the
+heuristic looked sound until it met a live session. It now scans command positions
+instead (`./log_tool_calls.py --self-test`), and [`log-sample.jsonl`](log-sample.jsonl) is
+kept in its pre-fix state as the evidence.
+
+What remains true: `commands` is a scanner, not a shell parser. `eval`, `xargs`,
+`bash -c` and aliases all conceal the program that actually runs, so a census built on it
+undercounts. That is a floor on what this field can claim, not a bug to fix.
 
 ## What it reads
 
