@@ -62,7 +62,12 @@ full definition and the commands behind each tier.
 
 ## Current state
 
-**Two artifacts, both verified.**
+**Three artifacts.**
+[`governability-probe`](artifacts/governability-probe/) measures what a host actually lets
+you control — nine structural parameters, feeding the
+[Agent Governability Index](https://github.com/sv-pro/ai2rules/blob/main/docs/GOVERNABILITY-INDEX.md)
+upstream, where the definitions and results table live. 3 of its 9 procedures have been
+executed so far, and it says which.
 [`claude-code-tool-log`](artifacts/claude-code-tool-log/) is a `PreToolUse` hook that
 logs every tool call Claude Code makes — native and MCP, with arguments, at a redaction
 level you choose. If you use Claude Code and want a capability census, start there.
@@ -70,10 +75,11 @@ level you choose. If you use Claude Code and want a capability census, start the
 enumerates every tool your MCP servers expose and writes a manifest declaring all of it,
 which is what any client without a hook needs.
 
-Both are **tier 0**, and that is the honest label: neither enforces anything on itself.
-One is a logger, the other writes a manifest that makes tier 2 reachable — but that's a
-fact about the manifest, not about the script. Calling either tier 1 because it is
-governance-adjacent would be the inflation the contract exists to stop.
+All three are **tier 0**, and that is the honest label: none of them enforces anything on
+itself. They are instruments — a logger, an enumerator, and a set of procedures. One of
+them writes a manifest that makes tier 2 reachable, but that's a fact about the manifest,
+not about the script. Calling any of them tier 1 because it is governance-adjacent would
+be the inflation the contract exists to stop.
 
 No experiments or articles published yet. The census experiment they'll come from is
 described in [`experiments/`](experiments/).
