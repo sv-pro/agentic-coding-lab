@@ -52,6 +52,13 @@ manifest, and it is the only one that writes your secrets to a file. That trade 
 whole reason the levels exist; pick deliberately, and don't leave `full` on after the
 run you needed it for.
 
+**A limit found by running it for real, not by testing it.** At `paths`, `argv0` is the
+command's first token — which is `if`, `for` or `VAR=$(…)` often enough that about a fifth
+of real shell calls classify to nothing. Every synthetic event used during development
+started with a clean command name, so the heuristic looked sound until it met a live
+session. It is a hint, not a category, and [`log-sample.jsonl`](log-sample.jsonl) shows
+exactly where it fails.
+
 ## What it reads
 
 Everything the host proposes. Native tools and MCP tools alike — an MCP call arrives as
