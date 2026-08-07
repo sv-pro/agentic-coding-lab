@@ -84,13 +84,20 @@ be the inflation the contract exists to stop.
 No experiments or articles published yet. The census experiment they'll come from is
 described in [`experiments/`](experiments/).
 
-## Open calls before this goes public
+## Open calls
 
-- **No LICENSE yet.** A repo whose point is that people copy things out of it needs
-  one. Sibling repos in this cluster don't carry a license either, so this is a
-  cluster-wide call rather than a local oversight.
 - **No experiment published yet.** The artifacts are the instruments; the result they
   exist to produce hasn't been run.
+- **Six of the probe's nine procedures are unrun**, and two columns of the upstream
+  index are entirely unknown. An unrun procedure is a hypothesis about how to measure
+  something, not a measurement, and the repo says so on every one of them.
+
+## License
+
+MIT — see [`LICENSE`](LICENSE). Copy what you like; the point of the repo is that you
+do. The sibling repos ([`ai2rules`](https://github.com/sv-pro/ai2rules),
+[`ai-detector-bench`](https://github.com/sv-pro/ai-detector-bench)) carry the same
+license as of 2026-08-08.
 
 ## Relationship to the rest of the cluster
 
