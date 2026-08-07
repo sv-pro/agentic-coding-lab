@@ -53,7 +53,7 @@ URL_FIELDS = ("url",)
 _ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*\+?=")
 
 # Reset to a command position; these are structure, not programs.
-_SEPARATORS = {";", ";;", "&&", "||", "|", "|&", "&", "(", ")", "{", "}", "\n"}
+_SEPARATORS = {";", ";;", "&&", "||", "|", "|&", "&", "$(", "\n"}
 
 # Keywords followed by a command: step over them and keep looking (`if grep …`).
 _KEYWORDS_TRANSPARENT = {"if", "then", "elif", "else", "fi", "while", "until", "do",
@@ -67,17 +67,36 @@ _KEYWORDS_BINDING = {"for", "case", "select", "in"}
 _TRIVIAL = {"[", "[[", "]", "]]", "test", ":", "true", "false"}
 
 
-def _tokens(command: str) -> list[str]:
-    """Split on whitespace after padding shell operators so they become their own tokens.
+# A recordable command name. Anything else is punctuation, a fragment, or code that got
+# scanned by mistake — and must never reach the log, because `--level paths` promises not
+# to record command *content*.
+_COMMAND_NAME = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.+@-]*$")
 
-    Not a shell parser — deliberately. `$(` degrades to `$` + `(`, which is exactly what
-    we want: the `$` is ignored and the `(` opens a command position, so the contents of a
-    substitution get scanned like anything else.
+# Even a correct parse should not be able to dump a command into the log one word at a
+# time. If a call really invokes more programs than this, the count is what matters.
+_MAX_COMMANDS = 8
+
+_QUOTED = re.compile(r"'[^']*'|\"[^\"]*\"")
+
+
+def _tokens(command: str) -> list[str]:
+    """Split into shell-ish tokens, conservatively.
+
+    Not a shell parser, and the failure mode is what shapes it: an earlier version padded
+    bare parens into separators, so an embedded Python heredoc opened a "command position"
+    on every `(` and scattered fragments of the script across the log. Three rules keep
+    that from recurring:
+
+      * quoted spans are dropped — they are data, never a command position we can trust;
+      * everything from the first heredoc marker on is dropped, being input rather than shell;
+      * only `$(` and a backtick open a nested command; a bare `(` does not.
     """
-    text = command
+    text = command.split("<<", 1)[0]
+    text = _QUOTED.sub(" ", text)
+    text = text.replace("$(", " $( ").replace("`", " $( ")
     for op in ("&&", "||", ";;", "|&"):
         text = text.replace(op, f" {op} ")
-    for ch in (";", "|", "&", "(", ")", "{", "}", "\n"):
+    for ch in (";", "|", "&", "\n"):
         text = text.replace(ch, f" {ch} ")
     return text.split()
 
@@ -102,8 +121,12 @@ def shell_commands(command: str) -> list[str]:
             at_command = False
             continue
         name = tok.rsplit("/", 1)[-1][:64]
-        if name and name not in found:
+        # Validation is the safety net, not the parser: if the scan goes wrong, junk is
+        # dropped rather than written to a log that promised not to hold command content.
+        if _COMMAND_NAME.match(name) and name not in found:
             found.append(name)
+            if len(found) >= _MAX_COMMANDS:
+                break
         at_command = False
     return found
 
@@ -153,6 +176,14 @@ SELF_TEST = [
     ("python3 - <<'PY'", ["python3"]),
     ("", []),
     ("   ", []),
+    # The pathological case that broke the previous version: a shell call wrapping a
+    # Python heredoc. Bare parens used to open a command position on every function call.
+    ("""cat f | python3 -c "
+import sys, json
+for l in sys.stdin: print(json.loads(l)['tool'])
+" """, ["cat", "python3"]),
+    ("echo 'a; rm -rf /' > safe.txt", ["echo"]),
+    ("python3 - <<'PY'\nimport os\nos.system('whoami')\nPY", ["python3"]),
 ]
 
 

@@ -60,9 +60,29 @@ heuristic looked sound until it met a live session. It now scans command positio
 instead (`./log_tool_calls.py --self-test`), and [`log-sample.jsonl`](log-sample.jsonl) is
 kept in its pre-fix state as the evidence.
 
-What remains true: `commands` is a scanner, not a shell parser. `eval`, `xargs`,
-`bash -c` and aliases all conceal the program that actually runs, so a census built on it
-undercounts. That is a floor on what this field can claim, not a bug to fix.
+**Then a second, worse bug, also found by running it.** The first fix padded bare parens
+into command separators — so a `Bash` call wrapping a Python heredoc opened a "command
+position" on every function call and scattered **fragments of the script** across the log:
+`print`, `d['tool']:6`, `.jsonl`. That is not a classification error, it is a **redaction
+failure** — `--level paths` promises not to record command content, and it was recording
+it a word at a time.
+
+Fixed, and hardened so the class of failure cannot recur silently:
+
+| Guard | Effect |
+|---|---|
+| quoted spans dropped before scanning | embedded code and data are never command positions |
+| everything after `<<` dropped | heredoc bodies are input, not shell |
+| bare `(` no longer a separator | only `$(` and backticks open a nested command |
+| every name must match `^[A-Za-z0-9_][A-Za-z0-9_.+@-]*$` | fragments and punctuation are discarded, not logged |
+| at most 8 commands kept | a bad parse loses data instead of spilling the command |
+
+The last two are the ones that matter for safety: they are a **floor on what can leak**,
+independent of whether the parser is right.
+
+What remains true: `commands` is a scanner, not a shell parser. `sh -c "…"`, `eval`,
+`xargs` and aliases conceal the program that actually runs, so a census built on it
+undercounts. That is a stated limit, not a bug queued for later.
 
 ## What it reads
 

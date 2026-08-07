@@ -137,9 +137,13 @@ is every host except Claude Code today.
 - **Anything about a different host.** Claude Desktop has no hooks. Codex and Copilot
   have their own shapes.
 - **Perfect command classification.** `commands` handles assignments, keywords, pipes and
-  substitutions, but it is a scanner and not a shell parser: `eval`, `xargs`, `bash -c`
-  and aliases all hide the program that actually runs. Use `--level full` when you need
-  this exact — and read [`SAFETY.md`](SAFETY.md) before you do.
+  substitutions, but it is a scanner and not a shell parser. It deliberately gives up in
+  three places rather than guess: **quoted spans are dropped**, **everything after a
+  heredoc marker is dropped**, and a bare `(` does not open a command. So `sh -c "git
+  push"`, `eval`, `xargs` and aliases all hide the program that actually runs, and a
+  census built on this **undercounts**. Every extracted name must also match a strict
+  command-name pattern, and at most 8 are kept — so a bad parse loses data rather than
+  spilling command text into the log. Use `--level full` when you need this exact.
 
 ## Rotate it
 
