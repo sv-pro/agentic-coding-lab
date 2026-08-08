@@ -18,9 +18,15 @@ instruments.
 
 ## Coverage, stated plainly
 
-**7 of 9 procedures have been executed** — G1, G4, G9 (Claude Code, 2026-08-06) and G2, G6,
-G7, G8 (Claude Code **2.1.223**, 2026-08-08). **G3 and G5 are blocked rather than unrun:**
-both need an action the host prompts for, and nothing prompted in the session under test.
+**8 of 9 procedures have been executed** — G1, G4, G9 (Claude Code, 2026-08-06); G2, G6, G7,
+G8 (Claude Code **2.1.223**, 2026-08-08); **G3 (Antigravity CLI `agy` 1.1.10**, 2026-08-08),
+the first measurement here from a second host. **G5 is blocked, and G3 is still blocked on
+Claude Code:** both need an action the host prompts for, and nothing prompted there.
+
+**A note on running G3 anywhere:** it installs a hook that grants, and its deny control
+installs one that blocks. Use a throwaway workspace, and confirm the hook actually fired
+before believing either result — a hook that silently failed to load looks exactly like a
+host that ignores hooks.
 
 That distinction is load-bearing and is repeated on the artifact's front page. An unrun
 procedure is a *hypothesis about how to measure something*. It may not work; the host may
