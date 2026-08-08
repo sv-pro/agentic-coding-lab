@@ -136,11 +136,17 @@ The subtler and more valuable half of G2.
 policy can only ever add friction, never be the authority. Most hosts that have hooks at
 all get G2 right and G3 wrong; the difference is *overlay* versus *allowlist*.
 
-**Attempted 2026-08-08, Claude Code 2.1.223 — no result.** A hook emitting
-`"permissionDecision": "allow"` was installed and the call ran with no prompt. **That is
-not evidence**, because the control — the identical call with the hook removed — also ran
-with no prompt. Step 0 could not be satisfied, so the experiment had no contrast and the
-cell stays `?`.
+**Attempted 2026-08-08, Claude Code 2.1.223 — no result, and the cell was *downgraded* as a
+consequence.** A hook emitting `"permissionDecision": "allow"` was installed and the call
+ran with no prompt. **That is not evidence**, because the control — the identical call with
+the hook removed — also ran with no prompt. Step 0 could not be satisfied, so the
+experiment had no contrast.
+
+The index had this cell at `yes ○`. The `○` rested on the upstream project's *own* demo,
+which shows that **its hook emits** `allow` — not that the host honours it. That never met
+the index's definition of `○` (vendor documentation), so the cell went to **`?`**. Worth
+knowing before you run this procedure anywhere: **the cell most likely to be overstated is
+the one whose `yes` would flatter whoever built the tooling.**
 
 Recording this rather than the tempting version matters: "we returned allow and the call
 succeeded" would have been a `✓` in the table and it would have been wrong. **The measured
