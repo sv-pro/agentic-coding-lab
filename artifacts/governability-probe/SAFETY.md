@@ -4,8 +4,8 @@ kind: recipe
 hosts: [claude-code, claude-desktop, antigravity, codex, copilot]
 tier: 0
 reads: nothing directly — the procedures drive other artifacts, each with its own SAFETY.md, and your host's own configuration
-blast_radius: the G5 procedure deliberately provokes an action the host considers dangerous and then makes it silently repeatable, so run it in a throwaway directory and revoke the stored approval afterwards
-verified: 2026-08-07
+blast_radius: the G5 procedure deliberately provokes an action the host considers dangerous and then makes it silently repeatable, so run it in a throwaway directory and revoke the stored approval afterwards; G2 and G3 install hooks that deny or grant, and a blanket matcher there will brick the session you are measuring from
+verified: 2026-08-08
 ---
 
 # Safety notes — governability-probe
@@ -18,8 +18,9 @@ instruments.
 
 ## Coverage, stated plainly
 
-**3 of 9 procedures have been executed** (G1, G4, G9 — Claude Code, 2026-08-06), and two
-more partly (G6 at the MCP seam, G8). The rest are written but unrun.
+**7 of 9 procedures have been executed** — G1, G4, G9 (Claude Code, 2026-08-06) and G2, G6,
+G7, G8 (Claude Code **2.1.223**, 2026-08-08). **G3 and G5 are blocked rather than unrun:**
+both need an action the host prompts for, and nothing prompted in the session under test.
 
 That distinction is load-bearing and is repeated on the artifact's front page. An unrun
 procedure is a *hypothesis about how to measure something*. It may not work; the host may
