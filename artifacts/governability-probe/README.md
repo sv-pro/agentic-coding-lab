@@ -386,3 +386,53 @@ every tool call. The failure is that skipping is silent.
 - **Codex uses Claude Code's hook contract.** Same stdin JSON shape, same
   `hookSpecificOutput.permissionDecision` output, same `deny` semantics. A hook written for
   one runs on the other unmodified — which is worth knowing before writing two of them.
+
+
+## GitHub Copilot CLI: get the schema right before concluding anything
+
+Copilot is the host most likely to produce a **false negative**, and this probe produced one
+before catching it.
+
+**The schema is not Claude Code's, despite Copilot reading Claude Code's config files.** A
+repository hook at `.github/hooks/*.json` requires:
+
+```json
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      { "type": "command", "bash": "/abs/path/to/hook.sh", "timeoutSec": 20 }
+    ]
+  }
+}
+```
+
+Three differences that each silently produce nothing:
+
+- the script goes in a **`bash`** (or `powershell`, or `command`) field — **not** `"command":
+  "bash script.sh"`;
+- it is **`timeoutSec`**, not `timeout`;
+- events are **camelCase** (`preToolUse`). PascalCase is accepted for VS Code compatibility and
+  *changes the payload field names to snake_case*, so pick one and stay in it.
+
+The deny output also differs from Claude Code and Codex — **top-level, not nested**:
+
+```json
+{ "permissionDecision": "deny", "permissionDecisionReason": "…" }
+```
+
+**The false negative:** a first attempt here used `command` and `timeout`, saw nothing fire, and
+concluded Copilot had no working hook system. The file was simply malformed. **A hook that never
+runs and a hook that is misconfigured are indistinguishable from the outside** — which is the
+same failure shape as Codex's silent trust-skip, arriving through the config file instead.
+
+**Check the host's own log before concluding.** `~/.copilot/logs/` — if it contains no occurrence
+of "hook" at all, the host never looked, which distinguishes *"my file is wrong"* from *"this
+version has no hooks"*. That single grep is worth more than another run.
+
+**Measured 2026-08-12, Copilot CLI 1.0.79 on Linux: the hook did not fire** even with a
+schema-valid file, `--experimental`, or a `.claude/settings.json` variant — and the log had zero
+hook mentions. **This does not mean Copilot has no hooks:** GitHub documents them, and
+[copilot-cli#4001](https://github.com/github/copilot-cli/issues/4001) shows them running on
+Windows and failing *closed*. Report the version and platform with any result here; this is the
+one parameter in the index where they demonstrably disagree.
