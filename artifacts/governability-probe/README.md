@@ -7,7 +7,7 @@ Index](https://github.com/sv-pro/ai2rules/blob/main/docs/GOVERNABILITY-INDEX.md)
 the definitions and the results table live. This is the *how*; that is the *what* and the
 *so what*.
 
-> **8 of 9 procedures have been executed.** Claude Code: G1, G4, G9 (2026-08-06) and G2, G6,
+> **8 of 9 procedures have been executed, now across three hosts.** Claude Code: G1, G4, G9 (2026-08-06) and G2, G6,
 > G7, G8 (2026-08-08, **2.1.223**). Antigravity CLI: **G3** (2026-08-08, **agy 1.1.10**) —
 > the first result here from a second host, and it *reversed* the cell it replaced.
 > **G5 and G3 both remain open on Claude Code**, for the same reason: they need an action
@@ -352,3 +352,37 @@ that part of the 2026-08-06 observation stands.
 Send results as a table row with dates, versions, and what you actually observed —
 including the procedures that didn't work, which are findings about the procedure. The
 index treats `?` as an honest state and a guess as a defect.
+
+
+## Codex CLI: two flags before anything fires
+
+Running these procedures against Codex cost three inconclusive runs before a single
+measurement, for a reason worth stating up front rather than discovering.
+
+**A configured hook does not run by default, and says nothing when it doesn't.** Two
+separate gates:
+
+1. **The hook engine is feature-flagged off.** `--enable hooks`, or `[features] hooks` in
+   `~/.codex/config.toml`. Codex does at least tell you this one, in a line that is easy to
+   miss in a long transcript.
+2. **The hook definition must be *trusted*.** Codex persists trust per hook definition and
+   **silently skips untrusted hooks** — no warning, no log line, the tool call simply runs.
+   `--dangerously-bypass-hook-trust` overrides it for one invocation.
+
+With the feature enabled and the hook configured but untrusted, a `Bash` call executed
+normally and the hook was never invoked. **That is indistinguishable, from the outside, from
+a host that has no hooks at all** — and it is the exact shape of an operator believing they
+are governed while they are not.
+
+The trust model itself is a good idea: it stops an installed plugin quietly interposing on
+every tool call. The failure is that skipping is silent.
+
+**Two more things that cost time:**
+
+- **`codex exec` escalates nothing.** `touch` ran under `approval_policy = "untrusted"`, and
+  so did a write outside the `workspace-write` sandbox. So **step 0 for G3 and G5 cannot be
+  satisfied in `exec` mode** — the same blocker as Claude Code, arriving by a different
+  route. Those two need an interactive session.
+- **Codex uses Claude Code's hook contract.** Same stdin JSON shape, same
+  `hookSpecificOutput.permissionDecision` output, same `deny` semantics. A hook written for
+  one runs on the other unmodified — which is worth knowing before writing two of them.
