@@ -9,7 +9,7 @@ first. It is the cross-agent source of truth for *how to work here*; per-agent f
 **`agentic-coding-lab` — techniques for getting more out of AI coding agents, each
 shipped with an honest account of what it can reach.** Artifacts, experiments, articles.
 
-It is a **consumer** of [`ai2rules`](https://github.com/sv-pro/ai2rules), the governance
+It is a **consumer** of [`ai2rules`](https://ai2rules.dev/kernel/), the governance
 kernel that provides the safety half. Read [`docs/CHARTER.md`](docs/CHARTER.md) before
 adding anything — the scope boundary is written down precisely because this cluster's
 documented failure mode is repos that grew past their charter.
@@ -49,7 +49,7 @@ cd /path/to/ai2rules && cargo build --release -p cli-harness
 
 `harness gate --world <manifest>` reads one `GateRequest` on stdin and writes one
 `GateResponse` on stdout. The ABI is documented upstream in
-[`docs/harness-gate-abi.md`](https://github.com/sv-pro/ai2rules/blob/main/docs/harness-gate-abi.md).
+the kernel's `docs/harness-gate-abi.md` (the kernel repository is private since 2026-11-01).
 
 ## Standards
 

@@ -15,7 +15,7 @@ it goes wrong**, and — where it matters — a configuration that makes the bad
 *structurally impossible* rather than merely discouraged.
 
 That second half is not invented here. It comes from a sibling project,
-[`ai2rules`](https://github.com/sv-pro/ai2rules), which is a deterministic governance
+[`ai2rules`](https://ai2rules.dev/kernel/), which is a deterministic governance
 kernel for local CLI agents. This repo is its **consumer**, never its author. We
 import the brakes; we don't redesign them.
 
@@ -27,7 +27,7 @@ minutes — without the version where an agent quietly force-pushes over a colle
 branch because a web page told it to.
 
 You do not need to care about governance theory to use anything here. If you want the
-theory, it lives upstream in [`docs/THESIS.md`](https://github.com/sv-pro/ai2rules/blob/main/docs/THESIS.md)
+theory, it lives upstream: [Why ai2rules](https://ai2rules.dev/why/)
 and this repo will not restate it.
 
 ## What's in here
@@ -65,7 +65,7 @@ full definition and the commands behind each tier.
 **Three artifacts.**
 [`governability-probe`](artifacts/governability-probe/) measures what a host actually lets
 you control — nine structural parameters, feeding the
-[Agent Governability Index](https://github.com/sv-pro/ai2rules/blob/main/docs/GOVERNABILITY-INDEX.md)
+[Agent Governability Index](https://ai2rules.dev/kernel/docs/governability-index/)
 upstream, where the definitions and results table live. 3 of its 9 procedures have been
 executed so far, and it says which.
 [`claude-code-tool-log`](artifacts/claude-code-tool-log/) is a `PreToolUse` hook that
@@ -95,7 +95,7 @@ described in [`experiments/`](experiments/).
 ## License
 
 MIT — see [`LICENSE`](LICENSE). Copy what you like; the point of the repo is that you
-do. The sibling repos ([`ai2rules`](https://github.com/sv-pro/ai2rules),
+do. The sibling repos ([`ai2rules`](https://ai2rules.dev/kernel/),
 [`ai-detector-bench`](https://github.com/sv-pro/ai-detector-bench)) carry the same
 license as of 2026-08-08.
 
@@ -113,4 +113,4 @@ depend on `ai2rules`. `ai2rules` may never depend on this repo, and **nothing pr
 here may become an input to a governance decision** — an artifact is a convenience, and
 conveniences do not get a vote on authority. The reasoning is the same as the rule
 that keeps a text detector out of the kernel; it is recorded upstream in
-[`DECISIONS.md`](https://github.com/sv-pro/ai2rules/blob/main/DECISIONS.md).
+[`DECISIONS.md`](https://ai2rules.dev/kernel/decisions/).

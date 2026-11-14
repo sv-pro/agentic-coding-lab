@@ -90,11 +90,11 @@ Worth knowing before you draw conclusions from the distribution:
 
 ## Prerequisites
 
-The `harness` binary, for the gateway step. From an
-[`ai2rules`](https://github.com/sv-pro/ai2rules) checkout:
+The `harness` binary, for the gateway step, from npm (the
+[`ai2rules`](https://ai2rules.dev/kernel/) kernel repository is private since 2026-11-01):
 
 ```bash
-cargo build --release -p cli-harness
+npm install -g ai2rules-harness
 ```
 
 The enumerator itself needs nothing but Python 3 — you can run it before deciding whether
