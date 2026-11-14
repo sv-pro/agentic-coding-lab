@@ -26,7 +26,7 @@ gets written down on day one, not discovered in six months.*
 
 | Not here | Where instead | Why |
 |---|---|---|
-| The governance kernel, compiler, executor, gate ABI | [`ai2rules`](https://github.com/sv-pro/ai2rules) | This repo is a consumer. Changing the kernel to suit a recipe is the tail wagging the dog. |
+| The governance kernel, compiler, executor, gate ABI | [`ai2rules`](https://ai2rules.dev/kernel/) | This repo is a consumer. Changing the kernel to suit a recipe is the tail wagging the dog. |
 | The thesis, the architecture, the decision record | `ai2rules/docs/THESIS.md`, `DECISIONS.md` | Two copies of an argument drift within a month. Point, don't duplicate. |
 | Long-form governance essays | the ai2rules blog | The audiences differ — see the split below. |
 | Detector benchmarks | [`ai-detector-bench`](https://github.com/sv-pro/ai-detector-bench) | Different instrument, different audience. |

@@ -3,7 +3,7 @@
 **Nine procedures for finding out what your AI coding host actually lets you control.**
 
 Each answers one parameter of the [Agent Governability
-Index](https://github.com/sv-pro/ai2rules/blob/main/docs/GOVERNABILITY-INDEX.md), where
+Index](https://ai2rules.dev/kernel/docs/governability-index/), where
 the definitions and the results table live. This is the *how*; that is the *what* and the
 *so what*.
 

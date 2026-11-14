@@ -3,11 +3,11 @@
 *Every artifact in this repo declares a tier. This file defines them, names the real
 command behind each, and — more importantly — says where each one stops working.*
 
-The machinery is not ours. It comes from [`ai2rules`](https://github.com/sv-pro/ai2rules),
+The machinery is not ours. It comes from [`ai2rules`](https://ai2rules.dev/kernel/),
 a governance kernel that sits under a local CLI agent and decides what the agent is even
 able to represent. We configure it. We do not modify it, and this repo never re-explains
-its design — read [`docs/harness-architecture.md`](https://github.com/sv-pro/ai2rules/blob/main/docs/harness-architecture.md)
-upstream for that.
+its design — read the kernel's `docs/harness-architecture.md`
+upstream for that (the repository is private; [ai2rules.dev/kernel](https://ai2rules.dev/kernel/) has the public documents).
 
 ---
 
